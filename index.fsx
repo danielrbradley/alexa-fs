@@ -40,21 +40,10 @@ module Interop =
     | [<CompiledName("EXCEEDED_MAX_REPROMPTS")>] ExceededMaxReprompts
 
   [<Pojo>]
-  type Slot =
-    {
-      name : string
-      value : obj
-    }
-
-  type Slots =
-    [<Emit("$0[$1]{{=$2}}")>]
-    abstract Item: string -> Slot with get
-
-  [<Pojo>]
   type Intent =
     {
       name : string
-      slots : Slots
+      slots : obj
     }
 
   [<Pojo>]
@@ -160,7 +149,59 @@ module Interop =
 
 open Interop
 
+type Slots = Map<string, string>
+
+type Request =
+  | Launch
+  | Intent of name : string * Slots
+  | SessionEnded of SessionEndedReason
+
+type Session<'a> =
+  {
+    Attributes : 'a
+    IsNewSession : bool
+    Original : Interop.Request
+  }
+
+let attributesKey = "AlexaFs"
+
+[<Emit("Object.keys($0)")>]
+let objKeys obj : string[] = jsNative
+
+let parseRequest (initialAttributes : 'a) (request : Interop.Request) : Request * Session<'a> =
+  let parsedRequest =
+    match request.request.``type`` with
+    | RequestType.LaunchRequest -> Launch
+    | RequestType.IntentRequest ->
+      let intent = request.request.intent.Value
+      let slotKeys = objKeys intent.slots
+      let slots =
+        slotKeys
+        |> Array.map(fun key ->
+          let slot = intent.slots?(key)
+          !!slot?name, !!slot?value
+        )
+        |> Map.ofArray
+      Intent(intent.name, slots)
+    | RequestType.SessionEndedRequest -> SessionEnded(request.request.reason.Value)
+  let attributes = !!request.session.attributes?(attributesKey)
+  let session =
+    {
+      Attributes = defaultArg attributes initialAttributes
+      IsNewSession = request.session.``new``
+      Original = request
+    }
+  parsedRequest, session
+
+let makeResponse sessionAttributes response =
+  {
+    version = "1.0.0"
+    sessionAttributes = createObj [ attributesKey ==> sessionAttributes ]
+    response = response
+  }
+
 let handler = createHandler (fun context request -> async {
+  let request, session = parseRequest None request
   let response =
     {
       version = "1.0.0"
