@@ -158,7 +158,7 @@ type Session<'a> =
   {
     Attributes : 'a
     IsNewSession : bool
-    Original : Interop.Request
+    Raw : Interop.Request
   }
 
 let attributesKey = "AlexaFs"
@@ -188,7 +188,7 @@ module Request =
       {
         Attributes = defaultArg attributes initialAttributes
         IsNewSession = request.session.``new``
-        Original = request
+        Raw = request
       }
     parsedRequest, session
 
@@ -325,8 +325,17 @@ module Response =
   let linkAccount speechOption =
     { empty with Card = Some LinkAccount }
 
-let handler = Interop.createHandler (fun context request -> async {
-  let request, session = Request.ofRawRequest None request
+type Handler<'a> = Request -> Session<'a> -> Async<Response * 'a>
+
+module Lambda =
+  let ofHandler (defaultAttributes : 'a, handler : Handler<'a>) : Interop.LambdaHandler =
+    Interop.createHandler (fun context request -> async {
+      let request, session = Request.ofRawRequest defaultAttributes request
+      let! response, attributes = handler request session
+      return Response.toRawResponse response attributes
+    })
+
+let handler = Lambda.ofHandler (None, fun request session -> async {
   let response =
     Response.say (Text "Hello world!")
     |> Response.withCard (
@@ -346,5 +355,5 @@ let handler = Interop.createHandler (fun context request -> async {
 
   // Prompt user to log in
   let linkAccount = Response.linkAccount (Some (Text "Please log in."))
-  return Response.toRawResponse response None
+  return response, None
 })
