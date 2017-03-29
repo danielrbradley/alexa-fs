@@ -145,7 +145,7 @@ module Interop =
             callback.Invoke(None, Some response)
         with ex ->
           callback.Invoke(Some ex, None)
-      } |> Async.Start
+      } |> Async.StartImmediate
 
 open Interop
 
@@ -193,30 +193,165 @@ let parseRequest (initialAttributes : 'a) (request : Interop.Request) : Request 
     }
   parsedRequest, session
 
-let makeResponse sessionAttributes response =
+type Speech =
+  | Text of string
+  | SSML of string
+
+type Image =
   {
-    version = "1.0.0"
-    sessionAttributes = createObj [ attributesKey ==> sessionAttributes ]
-    response = response
+    SmallUrl : string
+    LargeUrl : string
   }
+
+type Card =
+  {
+    Title : string
+    Content : string
+    Image : Image option
+  }
+
+module Response =
+  let private makeResponse sessionAttributes response =
+    {
+      version = "1.0.0"
+      sessionAttributes = createObj [ attributesKey ==> sessionAttributes ]
+      response = response
+    }
+
+  let private makeSpeech speech : Interop.Speech =
+    match speech with
+    | Text text ->
+      {
+        ``type`` = Interop.SpeechType.PlainText
+        text = Some text
+        ssml = None
+      }
+    | SSML ssml ->
+      {
+        ``type`` = Interop.SpeechType.SSML
+        text = None
+        ssml = Some ssml
+      }
+
+  let private makeImage image =
+    {
+      smallImageUrl = image.SmallUrl
+      largeImageUrl = image.LargeUrl
+    }
+
+  let private defaultCard =
+    {
+      ``type`` = Interop.CardType.Simple
+      title = None
+      content = None
+      text = None
+      image = None
+    }
+
+  let private makeCard card =
+    match card.Image with
+    | None ->
+      { defaultCard with
+          ``type`` = Interop.CardType.Simple
+          title = Some card.Title
+          content = Some card.Content
+      }
+    | Some image ->
+      {
+        defaultCard with
+          ``type`` = Interop.CardType.Standard
+          title = Some card.Title
+          image = Some (makeImage image)
+          text = Some card.Content
+      }
+
+  let private emptyBody =
+    {
+      shouldEndSession = false
+      outputSpeech = None
+      reprompt = None
+      card = None
+    }
+
+  let withSpeech speech response =
+    {
+      response with
+        response =
+          {
+            response.response with
+              outputSpeech = Some (makeSpeech speech)
+          }
+    }
+
+  let say speech =
+    makeResponse None emptyBody
+    |> withSpeech speech
+
+  let setState state response =
+    makeResponse state (response.response)
+
+  let withReprompt speech response =
+    {
+      response with
+        response =
+          {
+            response.response with
+              reprompt = Some { outputSpeech = (makeSpeech speech) }
+          }
+    }
+
+  let endSession response =
+    {
+      response with
+        response =
+          {
+            response.response with
+              shouldEndSession = true
+          }
+    }
+
+  let withCard card response =
+    {
+      response with
+        response =
+          {
+            response.response with
+              card = Some (makeCard card)
+          }
+    }
+
+  let linkAccount speechOption =
+    makeResponse
+      None
+      {
+        emptyBody with
+          outputSpeech = speechOption |> Option.map makeSpeech
+          card = Some
+            {
+              defaultCard with
+                ``type`` = Interop.CardType.LinkAccount
+            }
+      }
 
 let handler = createHandler (fun context request -> async {
   let request, session = parseRequest None request
   let response =
-    {
-      version = "1.0.0"
-      sessionAttributes = None
-      response =
-        {
-          shouldEndSession = true
-          outputSpeech = (Some {
-            ``type`` = PlainText
-            text = Some "Hello world"
-            ssml = None
-          })
-          reprompt = None
-          card = None
-        }
-    }
+    Response.say (Text "Hello world!")
+    |> Response.setState None
+    |> Response.withCard
+      {
+        Title = "My Card"
+        Content = "Info about this skill"
+        Image = Some
+          {
+            SmallUrl = "https://placehold.it/720x480"
+            LargeUrl = "https://placehold.it/1200x800"
+          }
+      }
+    |> Response.withReprompt (SSML """<speech>Use SSML to control how a word is <w role="ivona:VBD">read</w> out.</speech>""")
+    |> Response.endSession
+
+  // Prompt user to log in
+  let linkAccount = Response.linkAccount (Some (Text "Please log in."))
   return response
 })
