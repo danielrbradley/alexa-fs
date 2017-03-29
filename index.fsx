@@ -156,8 +156,12 @@ type Request =
 
 type Session<'a> =
   {
+    ApplicationId : string
+    UserId : string
+    UserAccessToken : string option
+    SessionId : string
+    IsNew : bool
     Attributes : 'a
-    IsNewSession : bool
     Raw : Interop.Request
   }
 
@@ -186,8 +190,12 @@ module Request =
     let attributes = !!request.session.attributes?(attributesKey)
     let session =
       {
+        ApplicationId = request.session.application.applicationId
+        UserId = request.session.user.userId
+        UserAccessToken = request.session.user.accessToken
+        SessionId = request.session.sessionId
+        IsNew = request.session.``new``
         Attributes = defaultArg attributes initialAttributes
-        IsNewSession = request.session.``new``
         Raw = request
       }
     parsedRequest, session
