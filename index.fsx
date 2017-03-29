@@ -165,33 +165,34 @@ type Session<'a> =
 
 let attributesKey = "AlexaFs"
 
-[<Emit("Object.keys($0)")>]
-let objKeys obj : string[] = jsNative
+module Request =
+  [<Emit("Object.keys($0)")>]
+  let objKeys obj : string[] = jsNative
 
-let parseRequest (initialAttributes : 'a) (request : Interop.Request) : Request * Session<'a> =
-  let parsedRequest =
-    match request.request.``type`` with
-    | RequestType.LaunchRequest -> Launch
-    | RequestType.IntentRequest ->
-      let intent = request.request.intent.Value
-      let slotKeys = objKeys intent.slots
-      let slots =
-        slotKeys
-        |> Array.map(fun key ->
-          let slot = intent.slots?(key)
-          !!slot?name, !!slot?value
-        )
-        |> Map.ofArray
-      Intent(intent.name, slots)
-    | RequestType.SessionEndedRequest -> SessionEnded(request.request.reason.Value)
-  let attributes = !!request.session.attributes?(attributesKey)
-  let session =
-    {
-      Attributes = defaultArg attributes initialAttributes
-      IsNewSession = request.session.``new``
-      Original = request
-    }
-  parsedRequest, session
+  let ofRawRequest (initialAttributes : 'a) (request : Interop.Request) : Request * Session<'a> =
+    let parsedRequest =
+      match request.request.``type`` with
+      | RequestType.LaunchRequest -> Launch
+      | RequestType.IntentRequest ->
+        let intent = request.request.intent.Value
+        let slotKeys = objKeys intent.slots
+        let slots =
+          slotKeys
+          |> Array.map(fun key ->
+            let slot = intent.slots?(key)
+            !!slot?name, !!slot?value
+          )
+          |> Map.ofArray
+        Intent(intent.name, slots)
+      | RequestType.SessionEndedRequest -> SessionEnded(request.request.reason.Value)
+    let attributes = !!request.session.attributes?(attributesKey)
+    let session =
+      {
+        Attributes = defaultArg attributes initialAttributes
+        IsNewSession = request.session.``new``
+        Original = request
+      }
+    parsedRequest, session
 
 type Speech =
   | Text of string
@@ -203,11 +204,23 @@ type Image =
     LargeUrl : string
   }
 
-type Card =
+type CustomCard =
   {
     Title : string
     Content : string
     Image : Image option
+  }
+
+type Card =
+  | LinkAccount
+  | Custom of CustomCard
+
+type Response =
+  {
+    EndSession : bool
+    Speech : Speech option
+    Reprompt : Speech option
+    Card : Card option
   }
 
 module Response =
@@ -249,109 +262,91 @@ module Response =
     }
 
   let private makeCard card =
-    match card.Image with
-    | None ->
-      { defaultCard with
-          ``type`` = Interop.CardType.Simple
-          title = Some card.Title
-          content = Some card.Content
-      }
-    | Some image ->
+    match card with
+    | LinkAccount ->
       {
         defaultCard with
-          ``type`` = Interop.CardType.Standard
-          title = Some card.Title
-          image = Some (makeImage image)
-          text = Some card.Content
+          ``type`` = Interop.CardType.LinkAccount
+      }
+    | Custom details ->
+      match details.Image with
+      | None ->
+        { defaultCard with
+            ``type`` = Interop.CardType.Simple
+            title = Some details.Title
+            content = Some details.Content
+        }
+      | Some image ->
+        {
+          defaultCard with
+            ``type`` = Interop.CardType.Standard
+            title = Some details.Title
+            text = Some details.Content
+            image = Some (makeImage image)
+        }
+
+  let toRawResponse response attributes =
+    makeResponse
+      attributes
+      {
+        outputSpeech = response.Speech |> Option.map makeSpeech
+        reprompt = response.Reprompt |> Option.map (fun reprompt -> { outputSpeech = makeSpeech reprompt })
+        shouldEndSession = response.EndSession
+        card = response.Card |> Option.map makeCard
       }
 
-  let private emptyBody =
+  let empty =
     {
-      shouldEndSession = false
-      outputSpeech = None
-      reprompt = None
-      card = None
+      EndSession = false
+      Speech = None
+      Reprompt = None
+      Card = None
     }
 
   let withSpeech speech response =
-    {
-      response with
-        response =
-          {
-            response.response with
-              outputSpeech = Some (makeSpeech speech)
-          }
-    }
+    { response with Speech = Some speech }
 
   let say speech =
-    makeResponse None emptyBody
-    |> withSpeech speech
-
-  let setState state response =
-    makeResponse state (response.response)
+    { empty with Speech = Some speech }
 
   let withReprompt speech response =
-    {
-      response with
-        response =
-          {
-            response.response with
-              reprompt = Some { outputSpeech = (makeSpeech speech) }
-          }
-    }
+    { response with Reprompt = Some speech }
 
   let endSession response =
-    {
-      response with
-        response =
-          {
-            response.response with
-              shouldEndSession = true
-          }
-    }
+    { response with EndSession = true }
 
   let withCard card response =
-    {
-      response with
-        response =
-          {
-            response.response with
-              card = Some (makeCard card)
-          }
-    }
+    { response with Card = Some card }
+
+  let withCustomCard card response =
+    { response with Card = Some (Custom card) }
+
+  let withLinkAccount response =
+    { response with Card = Some LinkAccount }
 
   let linkAccount speechOption =
-    makeResponse
-      None
-      {
-        emptyBody with
-          outputSpeech = speechOption |> Option.map makeSpeech
-          card = Some
-            {
-              defaultCard with
-                ``type`` = Interop.CardType.LinkAccount
-            }
-      }
+    { empty with Card = Some LinkAccount }
 
 let handler = createHandler (fun context request -> async {
-  let request, session = parseRequest None request
+  let request, session = Request.ofRawRequest None request
   let response =
     Response.say (Text "Hello world!")
-    |> Response.setState None
-    |> Response.withCard
-      {
-        Title = "My Card"
-        Content = "Info about this skill"
-        Image = Some
-          {
-            SmallUrl = "https://placehold.it/720x480"
-            LargeUrl = "https://placehold.it/1200x800"
-          }
-      }
+    |> Response.withCard (
+      Custom
+        {
+          Title = "My Card"
+          Content = "Info about this skill"
+          Image = Some
+            {
+              SmallUrl = "https://placehold.it/720x480"
+              LargeUrl = "https://placehold.it/1200x800"
+            }
+        }
+    )
     |> Response.withReprompt (SSML """<speech>Use SSML to control how a word is <w role="ivona:VBD">read</w> out.</speech>""")
     |> Response.endSession
 
   // Prompt user to log in
   let linkAccount = Response.linkAccount (Some (Text "Please log in."))
-  return response
+  return Response.toRawResponse response None
 })
