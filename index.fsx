@@ -3,6 +3,12 @@
 open Fable.Core
 open Fable.Core.JsInterop
 
+[<StringEnum>]
+type SessionEndedReason =
+  | [<CompiledName("USER_INITIATED")>] UserInitiated
+  | [<CompiledName("ERROR")>] Error
+  | [<CompiledName("EXCEEDED_MAX_REPROMPTS")>] ExceededMaxReprompts
+
 module Interop =
   [<Pojo>]
   type User =
@@ -32,12 +38,6 @@ module Interop =
     | [<CompiledName("LaunchRequest")>] LaunchRequest
     | [<CompiledName("IntentRequest")>] IntentRequest
     | [<CompiledName("SessionEndedRequest")>] SessionEndedRequest
-
-  [<StringEnum>]
-  type SessionEndedReason =
-    | [<CompiledName("USER_INITIATED")>] UserInitiated
-    | [<CompiledName("ERROR")>] Error
-    | [<CompiledName("EXCEEDED_MAX_REPROMPTS")>] ExceededMaxReprompts
 
   [<Pojo>]
   type Intent =
@@ -147,8 +147,6 @@ module Interop =
           callback.Invoke(Some ex, None)
       } |> Async.StartImmediate
 
-open Interop
-
 type Slots = Map<string, string>
 
 type Request =
@@ -172,8 +170,8 @@ module Request =
   let ofRawRequest (initialAttributes : 'a) (request : Interop.Request) : Request * Session<'a> =
     let parsedRequest =
       match request.request.``type`` with
-      | RequestType.LaunchRequest -> Launch
-      | RequestType.IntentRequest ->
+      | Interop.RequestType.LaunchRequest -> Launch
+      | Interop.RequestType.IntentRequest ->
         let intent = request.request.intent.Value
         let slotKeys = objKeys intent.slots
         let slots =
@@ -184,7 +182,7 @@ module Request =
           )
           |> Map.ofArray
         Intent(intent.name, slots)
-      | RequestType.SessionEndedRequest -> SessionEnded(request.request.reason.Value)
+      | Interop.RequestType.SessionEndedRequest -> SessionEnded(request.request.reason.Value)
     let attributes = !!request.session.attributes?(attributesKey)
     let session =
       {
@@ -224,7 +222,7 @@ type Response =
   }
 
 module Response =
-  let private makeResponse sessionAttributes response =
+  let private makeResponse sessionAttributes response : Interop.Response =
     {
       version = "1.0.0"
       sessionAttributes = createObj [ attributesKey ==> sessionAttributes ]
@@ -246,13 +244,13 @@ module Response =
         ssml = Some ssml
       }
 
-  let private makeImage image =
+  let private makeImage image : Interop.Image =
     {
       smallImageUrl = image.SmallUrl
       largeImageUrl = image.LargeUrl
     }
 
-  let private defaultCard =
+  let private defaultCard : Interop.Card =
     {
       ``type`` = Interop.CardType.Simple
       title = None
@@ -327,7 +325,7 @@ module Response =
   let linkAccount speechOption =
     { empty with Card = Some LinkAccount }
 
-let handler = createHandler (fun context request -> async {
+let handler = Interop.createHandler (fun context request -> async {
   let request, session = Request.ofRawRequest None request
   let response =
     Response.say (Text "Hello world!")
