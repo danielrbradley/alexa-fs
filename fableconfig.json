@@ -1,5 +1,5 @@
 {
-    "projFile": "./index.fsx",
+    "projFile": "./alexa.fsx",
     "module": "commonjs",
     "outDir": "out"
 }

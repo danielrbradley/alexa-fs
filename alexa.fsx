@@ -309,6 +309,10 @@ module Response =
       Card = None
     }
 
+  /// Immediately exit without speech
+  let exit =
+    { empty with EndSession = true }
+
   let withSpeech speech response =
     { response with Speech = Some speech }
 

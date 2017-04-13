@@ -2,6 +2,8 @@
 
 `alexa-fs` is a lightweight library for writing Alexa skills in F# which are then compilled to JS via [Fable](http://fable.io/).
 
+See the [examples folder](examples) for more complete sample skills.
+
 ## Hello World Example
 
 ```fsharp
