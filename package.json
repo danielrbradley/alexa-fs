@@ -1,5 +1,13 @@
 {
-  "private": true,
+  "name": "alexa-fs",
+  "version": "0.1",
+  "author": {
+    "name": "Daniel Bradley",
+    "email": "daniel@danielbradley.net",
+    "url": "https://github.com/danielrbradley"
+  },
+  "license": "MIT",
+  "main": "alexa.fsx",
   "scripts": {
     "build": "node node_modules/fable-compiler",
     "start": "node out"
