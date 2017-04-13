@@ -1,4 +1,4 @@
-#load "../../alexa.fsx"
+#load "node_modules/alexa-fs/alexa.fsx"
 
 open Alexa
 

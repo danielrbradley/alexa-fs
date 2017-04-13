@@ -4,10 +4,18 @@
 
 See the [examples folder](examples) for more complete sample skills.
 
+## Getting Started
+
+Install package from GitHub
+
+```
+npm install --save git://github.com/danielrbradley/alexa-fs.git
+```
+
 ## Hello World Example
 
 ```fsharp
-#load "alexa.fsx"
+#load "node_modules/alexa-fs/alexa.fsx"
 open Alexa
 
 let handler = Lambda.ofHandler (None, fun request session -> async {

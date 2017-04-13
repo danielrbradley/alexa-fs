@@ -1,28 +1,5 @@
-#load "../../alexa.fsx"
+#load "node_modules/alexa-fs/alexa.fsx"
 open Alexa
-
-(* Intent Schema JSON:
- *   {
- *     "intents": [
- *       {
- *         "intent": "GuessNumber",
- *         "slots": [{ "name": "Guess", "type": "AMAZON.NUMBER" }]
- *       },
- *       { "intent": "AMAZON.YesIntent" },
- *       { "intent": "AMAZON.NoIntent" },
- *       { "intent": "AMAZON.StopIntent" }
- *       { "intent": "AMAZON.HelpIntent" },
- *     ]
- *   }
- *
- * Utterances:
- *   GuessNumber I guess {Guess}
- *   GuessNumber is it {Guess}
- *   GuessNumber what about {Guess}
- *   GuessNumber my guess is {Guess}
- *   GuessNumber if the number is {Guess}
- *   GuessNumber {Guess}
- *)
 
 type State =
   | NotStarted

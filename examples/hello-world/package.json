@@ -1,0 +1,14 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "node node_modules/fable-compiler",
+    "start": "node out"
+  },
+  "devDependencies": {
+    "fable-compiler": "^0.7.50"
+  },
+  "dependencies": {
+    "alexa-fs": "git://github.com/danielrbradley/alexa-fs.git",
+    "fable-core": "^0.7.29"
+  }
+}
