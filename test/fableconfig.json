@@ -1,0 +1,5 @@
+{
+    "projFile": "./stubHandler.fsx",
+    "module": "commonjs",
+    "outDir": "out"
+}

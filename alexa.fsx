@@ -130,12 +130,12 @@ module Interop =
       awsRequestId : string
     }
 
-  type LambdaHandler = (Request * LambdaContext * (System.Func<exn option, Response option, unit>)) -> unit
+  type LambdaHandler = System.Func<Request, LambdaContext, (System.Func<exn option, Response option, unit>), unit>
 
   type AsyncLambdaHandler = LambdaContext -> Request -> Async<Response>
 
   let createHandler (handler : AsyncLambdaHandler) : LambdaHandler =
-    fun (request, context, callback) ->
+    System.Func<_,_,_,_>(fun request context callback ->
       async {
         try
           let! response = handler context request
@@ -145,7 +145,7 @@ module Interop =
             callback.Invoke(None, Some response)
         with ex ->
           callback.Invoke(Some ex, None)
-      } |> Async.StartImmediate
+      } |> Async.StartImmediate)
 
 type Slots = Map<string, string>
 

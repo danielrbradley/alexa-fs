@@ -9,11 +9,15 @@
   "license": "MIT",
   "main": "alexa.fsx",
   "scripts": {
-    "build": "node node_modules/fable-compiler",
-    "start": "node out"
+    "build": "./node_modules/.bin/fable",
+    "start": "node out",
+    "pretest": "./node_modules/.bin/fable --projFile test/fableconfig.json",
+    "test": "mocha"
   },
   "devDependencies": {
-    "fable-compiler": "^0.7.50"
+    "chai": "^3.5.0",
+    "fable-compiler": "^0.7.50",
+    "mocha": "^3.2.0"
   },
   "dependencies": {
     "fable-core": "^0.7.29"
