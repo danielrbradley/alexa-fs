@@ -21,7 +21,7 @@ let tryGetGuess slots =
 
 let notUnderstoodResponse = Response.say (Text "Sorry, I didn't understand, try saying a number between 1 and 100")
 
-let handler = Lambda.ofHandler (NotStarted, fun request session -> async {
+let handler = lambda (NotStarted, fun request session -> async {
   match request with
   | Launch ->
     return startNewGame()

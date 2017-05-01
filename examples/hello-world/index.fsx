@@ -2,7 +2,7 @@
 
 open Alexa
 
-let handler = Lambda.ofHandler (None, fun request session -> async {
+let handler = lambda (None, fun request session -> async {
   let response =
     Response.say (Text "Hello world!")
     |> Response.withReprompt (SSML """<speech>Use SSML to control how a word is <w role="ivona:VBD">read</w> out.</speech>""")

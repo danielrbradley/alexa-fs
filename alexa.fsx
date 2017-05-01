@@ -1,4 +1,5 @@
 #r "node_modules/fable-core/Fable.Core.dll"
+#load "lambda.fsx"
 
 open Fable.Core
 open Fable.Core.JsInterop
@@ -116,36 +117,6 @@ module Interop =
       sessionAttributes : obj
       response : ResponseBody
     }
-
-  [<Pojo>]
-  type LambdaContext =
-    {
-      callbackWaitsForEmptyEventLoop : bool
-      logGroupName : string
-      logStreamName : string
-      functionName : string
-      memoryLimitInMB : string
-      functionVersion : string
-      invokeid : string
-      awsRequestId : string
-    }
-
-  type LambdaHandler = System.Func<Request, LambdaContext, (System.Func<exn option, Response option, unit>), unit>
-
-  type AsyncLambdaHandler = LambdaContext -> Request -> Async<Response>
-
-  let createHandler (handler : AsyncLambdaHandler) : LambdaHandler =
-    System.Func<_,_,_,_>(fun request context callback ->
-      async {
-        try
-          let! response = handler context request
-          if request.request.``type`` = RequestType.SessionEndedRequest then
-            callback.Invoke(None, None)
-          else
-            callback.Invoke(None, Some response)
-        with ex ->
-          callback.Invoke(Some ex, None)
-      } |> Async.StartImmediate)
 
 type Slots = Map<string, string>
 
@@ -339,10 +310,13 @@ module Response =
 
 type Handler<'a> = Request -> Session<'a> -> Async<Response * 'a>
 
-module Lambda =
-  let ofHandler (defaultAttributes : 'a, handler : Handler<'a>) : Interop.LambdaHandler =
-    Interop.createHandler (fun context request -> async {
-      let request, session = Request.ofRawRequest defaultAttributes request
-      let! response, attributes = handler request session
-      return Response.toRawResponse response attributes
-    })
+let lambda (defaultAttributes : 'a, handler : Handler<'a>) : Lambda.NativeHandler<Interop.Request, Interop.Response option> =
+  Lambda.handler (fun context request -> async {
+    let request, session = Request.ofRawRequest defaultAttributes request
+    let! response, attributes = handler request session
+    match request with
+    | SessionEnded _ ->
+      return None
+    | _ ->
+      return Some <| Response.toRawResponse response attributes
+  })

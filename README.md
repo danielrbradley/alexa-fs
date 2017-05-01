@@ -18,7 +18,7 @@ npm install --save git://github.com/danielrbradley/alexa-fs.git
 #load "node_modules/alexa-fs/alexa.fsx"
 open Alexa
 
-let handler = Lambda.ofHandler (None, fun request session -> async {
+let handler = lambda (None, fun request session -> async {
   return (Response.say (Text "Hello world!")), None
 })
 ```
@@ -43,7 +43,7 @@ Breaking it down step by step:
 3. Slightly more to bite off this time - create an AWS lambda compatible handler function.
 
     ```fsharp
-    let handler = Lambda.ofHandler (None, fun request session -> async {
+    let handler = lambda (None, fun request session -> async {
       ...
     })
     ```
