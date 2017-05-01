@@ -1,16 +1,27 @@
-# Introduction
-
-`alexa-fs` is a lightweight library for writing Alexa skills in F# which are then compilled to JS via [Fable](http://fable.io/).
-
-See the [examples folder](examples) for more complete sample skills.
-
-## Getting Started
+# Getting Started
 
 Install package from GitHub
 
 ```
 npm install --save git://github.com/danielrbradley/alexa-fs.git
 ```
+
+_While in early beta phase, I haven't yet set this up on NPM_
+
+## Jump to:
+- [Introduction](#introduction)
+  - [Hello World Example](#hello-world-example)
+- [Models Reference](#models-reference)
+  - [Requests](#requests)
+  - [Response](#response)
+  - [Session Attributes](#session-attributes)
+- [Background](#background)
+
+# Introduction
+
+`alexa-fs` is a lightweight library for writing Alexa skills in F# which are then compilled to JS via [Fable](http://fable.io/).
+
+See the [examples folder](examples) for more complete sample skills.
 
 ## Hello World Example
 
@@ -79,6 +90,8 @@ Breaking it down step by step:
 
     _See section on [Responses](#response) for more info._
 
+# Models Reference
+
 ## Requests
 
 There are three possible request types: Launch, Intent and Session Ended. The request type models these as a Discriminated Union.
@@ -109,7 +122,7 @@ All these arguments are optional, though at least one of them should normally be
 
 State is important for almost all skills to maintain session variables during the course of a conversation, much like cookies in a web browser. These attributes are just a JSON object which is included in responses and will get passed back to the lambda with the next response from the user. When a conversation ends, the attributes is discarded and the next session will start with no attributes again.
 
-# Backgroud
+# Background
 
 ## Why use F#?
 The first skill I wrote was written using the official aws-sdk, which I found to have some strange abstractions and not very good documentation.
