@@ -1,5 +1,4 @@
-#r "node_modules/fable-core/Fable.Core.dll"
-#load "lambda.fsx"
+module Alexa
 
 open Fable.Core
 open Fable.Core.JsInterop
@@ -310,13 +309,14 @@ module Response =
 
 type Handler<'a> = Request -> Session<'a> -> Async<Response * 'a>
 
-let lambda (defaultAttributes : 'a, handler : Handler<'a>) : Lambda.NativeHandler<Interop.Request, Interop.Response option> =
-  Lambda.handler (fun context request -> async {
-    let request, session = Request.ofRawRequest defaultAttributes request
-    let! response, attributes = handler request session
-    match request with
-    | SessionEnded _ ->
-      return None
-    | _ ->
-      return Some <| Response.toRawResponse response attributes
-  })
+let lambda (defaultAttributes : 'a, handler : Handler<'a>)
+  : Aws.Lambda.NativeHandler<Interop.Request, Interop.Response option> =
+    Aws.Lambda.handler (fun context request -> async {
+      let request, session = Request.ofRawRequest defaultAttributes request
+      let! response, attributes = handler request session
+      match request with
+      | SessionEnded _ ->
+        return None
+      | _ ->
+        return Some <| Response.toRawResponse response attributes
+    })

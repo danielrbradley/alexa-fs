@@ -1,6 +1,6 @@
 {
   "name": "alexa-fs",
-  "version": "0.2",
+  "version": "0.2.0",
   "author": {
     "name": "Daniel Bradley",
     "email": "daniel@danielbradley.net",
@@ -8,18 +8,22 @@
   },
   "license": "MIT",
   "main": "alexa.fsx",
+  "private": true,
   "scripts": {
-    "build": "./node_modules/.bin/fable",
-    "start": "node out",
-    "pretest": "./node_modules/.bin/fable --projFile test/fableconfig.json",
-    "test": "mocha"
-  },
-  "devDependencies": {
-    "chai": "^3.5.0",
-    "fable-compiler": "^0.7.50",
-    "mocha": "^3.2.0"
+    "build": "webpack -p",
+    "start": "webpack-dev-server",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "fable-core": "^0.7.29"
+    "babel-runtime": "^6.23.0"
+  },
+  "devDependencies": {
+    "babel-core": "^6.24.1",
+    "babel-loader": "^7.0.0",
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-es2015": "^6.24.1",
+    "fable-loader": "^1.0.0",
+    "webpack": "^2.5.1",
+    "webpack-dev-server": "^2.4.5"
   }
 }

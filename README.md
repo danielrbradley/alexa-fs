@@ -8,6 +8,12 @@ npm install --save git://github.com/danielrbradley/alexa-fs.git
 
 _While in early beta phase, I haven't yet set this up on NPM_
 
+## Building
+
+1. Install npm dependencies: `yarn install`
+2. Install dotnet dependencies: `dotnet restore`
+3. Start Fable server and Webpack dev server: `dotnet fable npm-run start`
+
 ## Jump to:
 - [Introduction](#introduction)
   - [Hello World Example](#hello-world-example)
