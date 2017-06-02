@@ -1,0 +1,18 @@
+# serverless.yml
+service: guessing-game
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  memorySize: 512
+  timeout: 10
+  versionFunctions: false
+
+functions:
+  guessing-game:
+    handler: out/guessing-game/index.handler # required, handler set in AWS Lambda
+    name: ${self:provider.stage}-lambdaName
+    description: Demo of Fable Alexa
+    runtime: nodejs6.10
+    memorySize: 512
+    timeout: 10
