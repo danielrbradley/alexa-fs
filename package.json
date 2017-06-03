@@ -1,6 +1,6 @@
 {
-  "name": "alexa-fs",
-  "version": "0.2.0",
+  "name": "flexa",
+  "version": "0.3.0",
   "author": {
     "name": "Daniel Bradley",
     "email": "daniel@danielbradley.net",
@@ -14,7 +14,6 @@
     "src/",
     "Flexa.fsproj"
   ],
-  "private": true,
   "scripts": {
     "build": "webpack -p",
     "start": "webpack-dev-server",
