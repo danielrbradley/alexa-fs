@@ -1,4 +1,4 @@
-service: fable-alexa-hello-world
+service: fable-alexa-guessing-game
 
 provider:
   name: aws
@@ -8,6 +8,6 @@ provider:
 
 functions:
   alexa:
-    handler: out/hello-world/index.handler
+    handler: out/guessing-game/index.handler
     events:
       - alexaSkill

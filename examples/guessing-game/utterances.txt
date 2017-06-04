@@ -1,6 +1,6 @@
- GuessNumber I guess {Guess}
- GuessNumber is it {Guess}
- GuessNumber what about {Guess}
- GuessNumber my guess is {Guess}
- GuessNumber if the number is {Guess}
- GuessNumber {Guess}
+GuessNumber I guess {Guess}
+GuessNumber is it {Guess}
+GuessNumber what about {Guess}
+GuessNumber my guess is {Guess}
+GuessNumber if the number is {Guess}
+GuessNumber {Guess}
