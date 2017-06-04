@@ -1,6 +1,6 @@
 {
   "name": "alexa-fs",
-  "version": "0.2",
+  "version": "0.2.0",
   "author": {
     "name": "Daniel Bradley",
     "email": "daniel@danielbradley.net",
@@ -16,8 +16,8 @@
   },
   "devDependencies": {
     "chai": "^3.5.0",
-    "fable-compiler": "^0.7.50",
-    "mocha": "^3.2.0"
+    "fable-compiler": "^0.7.51",
+    "mocha": "^3.4.2"
   },
   "dependencies": {
     "fable-core": "^0.7.29"
