@@ -20,6 +20,19 @@ type NativeHandler<'Request, 'Response> = System.Func<'Request, LambdaContext, (
 
 type AsyncHandler<'Request, 'Response> = LambdaContext -> 'Request -> Async<'Response>
 
+type AsyncPipe<'Request, 'Response> = AsyncHandler<'Request, 'Response> -> LambdaContext -> 'Request -> Async<'Response>
+
+let withMiddleware (handler : AsyncHandler<'Request, 'Response>) (pipes : AsyncPipe<'Request, 'Response> list)
+  : AsyncHandler<'Request, 'Response> =
+    let rec processNext (remainingHandlers : AsyncPipe<'Request, 'Response> list) =
+      fun context request -> async {
+        match remainingHandlers with
+        | [] -> return! handler context request
+        | next :: rest ->
+          return! next (processNext rest) context request
+      }
+    processNext pipes
+
 let handler (handler : AsyncHandler<'Request, 'Response>) : NativeHandler<'Request, 'Response> =
   System.Func<_,_,_,_>(fun request context callback ->
     async {
