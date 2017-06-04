@@ -1,0 +1,13 @@
+service: fable-alexa-hello-world
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  stage: dev
+  region: eu-west-1
+
+functions:
+  hello:
+    handler: out/hello-world/index.handler
+    events:
+      - alexaSkill

@@ -29,7 +29,7 @@ module Interop =
     {
       ``new`` : bool
       sessionId : string
-      attributes : obj
+      attributes : obj option
       application : Application
       user : User
     }
@@ -44,7 +44,7 @@ module Interop =
   type Intent =
     {
       name : string
-      slots : obj
+      slots : obj option
     }
 
   [<Pojo>]
@@ -148,7 +148,10 @@ module Request =
       | Interop.RequestType.LaunchRequest -> Launch
       | Interop.RequestType.IntentRequest ->
         let intent = request.request.intent.Value
-        let slotKeys = objKeys intent.slots
+        let slotKeys = 
+          match intent.slots with
+          | None -> [||]
+          | Some slots -> objKeys slots
         let slots =
           slotKeys
           |> Array.map(fun key ->
@@ -158,7 +161,7 @@ module Request =
           |> Map.ofArray
         Intent(intent.name, slots)
       | Interop.RequestType.SessionEndedRequest -> SessionEnded(request.request.reason.Value)
-    let attributes = !!request.session.attributes?(attributesKey)
+    let attributes = request.session.attributes |> Option.bind(fun attributes -> !!attributes?(attributesKey))
     let session =
       {
         ApplicationId = request.session.application.applicationId

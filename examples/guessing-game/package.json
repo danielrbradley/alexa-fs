@@ -1,4 +1,6 @@
 {
+  "name": "fable-alexa-guessing-game",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "build": "node node_modules/fable-compiler",
